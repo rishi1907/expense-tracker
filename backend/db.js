@@ -6,14 +6,14 @@ const db = new Database(dbPath);
 
 // Initialize database table
 db.exec(`
-  CREATE TABLE IF NOT EXISTS expenses (
-    id TEXT PRIMARY KEY,
-    amount INTEGER NOT NULL,
-    category TEXT NOT NULL,
-    description TEXT,
-    date TEXT NOT NULL,
-    created_at INTEGER DEFAULT (strftime('%s', 'now'))
-  )
-`);
+    CREATE TABLE IF NOT EXISTS expenses (
+        id TEXT PRIMARY KEY,
+        amount INTEGER NOT NULL,
+        category TEXT NOT NULL,
+        description TEXT,
+        date TEXT NOT NULL,
+        created_at INTEGER DEFAULT (strftime('%s', 'now'))
+    )
+    `);
 
 module.exports = db;

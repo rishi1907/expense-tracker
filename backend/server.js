@@ -7,7 +7,20 @@ const app = express();
 const PORT = 3000;
 
 app.use(cors());
+app.use(cors());
 app.use(bodyParser.json());
+
+// Root endpoint
+app.get('/', (req, res) => {
+    res.json({
+        message: 'Expense Tracker API is running',
+        endpoints: {
+            GET_expenses: '/expenses?category=Food&sort=date_desc',
+            POST_expenses: '/expenses'
+        },
+        version: '1.0.0'
+    });
+});
 
 // Helper function to validate date format (YYYY-MM-DD)
 const isValidDate = (dateString) => {
