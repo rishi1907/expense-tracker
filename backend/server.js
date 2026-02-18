@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3000;
 connectDB();
 
 app.use(cors({
-    origin: ['https://expense-tracker-33mu.vercel.app', 'http://localhost:5173'],
+    origin: ['https://expense-tracker-33mu.vercel.app', 'http://localhost:5173', 'https://expense-tracker-wn6h.vercel.app'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
 }));
