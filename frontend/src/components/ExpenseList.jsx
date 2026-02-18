@@ -1,15 +1,38 @@
 import React, { useEffect, useState } from 'react';
 import { getExpenses } from '../api';
-import { Filter, ArrowUpDown, Calendar, DollarSign, Tag, Search, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Filter, ArrowUpDown, Calendar, DollarSign, Tag, Search, RefreshCw, AlertTriangle, ChevronDown } from 'lucide-react';
 
-const CATEGORIES = ['All', 'Food', 'Transport', 'Utilities', 'Entertainment', 'Health', 'Other'];
+const CATEGORIES = ['All', 'Food', 'Transport', 'Utilities', 'Entertainment', 'Health', 'Shopping', 'Education', 'Travel', 'Investments', 'Gifts', 'Rent', 'Other'];
+const MONTHS = ['All', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+const CATEGORY_COLORS = {
+    Food: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    Transport: 'bg-blue-100 text-blue-700 border-blue-200',
+    Utilities: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+    Entertainment: 'bg-purple-100 text-purple-700 border-purple-200',
+    Health: 'bg-red-100 text-red-700 border-red-200',
+    Shopping: 'bg-pink-100 text-pink-700 border-pink-200',
+    Education: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+    Travel: 'bg-sky-100 text-sky-700 border-sky-200',
+    Investments: 'bg-green-100 text-green-700 border-green-200',
+    Gifts: 'bg-rose-100 text-rose-700 border-rose-200',
+    Rent: 'bg-orange-100 text-orange-700 border-orange-200',
+    Other: 'bg-slate-100 text-slate-700 border-slate-200'
+};
 
 const ExpenseList = ({ refreshTrigger }) => {
     const [expenses, setExpenses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [filterCategory, setFilterCategory] = useState('All');
-    const [sortOrder, setSortOrder] = useState('date_desc'); // date_desc, date_asc
+    const [filterMonth, setFilterMonth] = useState(new Date().getMonth() + 1); // Default to current month (1-12)
+    const [filterYear, setFilterYear] = useState(new Date().getFullYear());
+    const [specificDate, setSpecificDate] = useState('');
+    const [sortOrder, setSortOrder] = useState('date_desc');
+
+    // Generate years list (current year back to 2020)
+    const currentYear = new Date().getFullYear();
+    const years = Array.from({ length: currentYear - 2020 + 1 }, (_, i) => currentYear - i);
 
     const fetchExpenses = async () => {
         setLoading(true);
@@ -19,11 +42,20 @@ const ExpenseList = ({ refreshTrigger }) => {
             if (filterCategory !== 'All') {
                 params.category = filterCategory;
             }
-            // We'll handle sorting in frontend for smoother UX or pass to backend
-            // Backend supports sort=date_desc. Let's start with backend sort for date_desc.
-            // But for date_asc, we might need manual sort if backend only supports desc.
-            // Let's implement client-side sorting for flexibility since list might be small.
-            // Actually, plan said backend supports date_desc. Let's use backend filtering.
+
+            if (specificDate) {
+                params.specific_date = specificDate;
+            } else {
+                if (filterYear !== 'All') {
+                    params.year = filterYear;
+                }
+                if (filterMonth !== 'All') {
+                    params.month = filterMonth;
+                }
+            }
+
+            // Backend sort
+            params.sort = sortOrder;
 
             const response = await getExpenses(params);
             let data = response.data;
@@ -47,7 +79,7 @@ const ExpenseList = ({ refreshTrigger }) => {
 
     useEffect(() => {
         fetchExpenses();
-    }, [filterCategory, sortOrder, refreshTrigger]);
+    }, [filterCategory, filterYear, filterMonth, specificDate, sortOrder, refreshTrigger]);
 
     const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
 
@@ -66,9 +98,16 @@ const ExpenseList = ({ refreshTrigger }) => {
         });
     };
 
+    // Calculate totals per category
+    const categoryTotals = expenses.reduce((acc, expense) => {
+        const cat = expense.category || 'Other';
+        acc[cat] = (acc[cat] || 0) + expense.amount;
+        return acc;
+    }, {});
+
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-full">
-            <div className="p-6 border-b border-slate-100 bg-white sticky top-0 z-10">
+        <div className="bg-white rounded-2xl shadow-lg border-2 border-slate-300 overflow-hidden flex flex-col h-full">
+            <div className="p-6 border-b-2 border-slate-300 bg-white sticky top-0 z-10">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <div>
                         <h2 className="text-xl font-semibold text-slate-800">Your Expenses</h2>
@@ -83,32 +122,115 @@ const ExpenseList = ({ refreshTrigger }) => {
                     </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3">
-                    <div className="relative flex-1">
-                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                        <select
-                            value={filterCategory}
-                            onChange={(e) => setFilterCategory(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none appearance-none bg-white cursor-pointer hover:border-slate-300 transition-colors"
-                        >
-                            {CATEGORIES.map(cat => (
-                                <option key={cat} value={cat}>{cat}</option>
-                            ))}
-                        </select>
+                {/* Filters Row */}
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 items-end">
+                    {/* Category Filter */}
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 mb-1 ml-1 uppercase tracking-wider">Category</label>
+                        <div className="relative">
+                            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                            <select
+                                value={filterCategory}
+                                onChange={(e) => setFilterCategory(e.target.value)}
+                                className="w-full pl-9 pr-10 py-2.5 rounded-xl border-2 border-slate-300 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none appearance-none bg-white cursor-pointer hover:border-slate-400 transition-colors"
+                            >
+                                {CATEGORIES.map(cat => (
+                                    <option key={cat} value={cat}>{cat}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
 
-                    <div className="relative flex-1">
-                        <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                        <select
-                            value={sortOrder}
-                            onChange={(e) => setSortOrder(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none appearance-none bg-white cursor-pointer hover:border-slate-300 transition-colors"
-                        >
-                            <option value="date_desc">Newest First</option>
-                            <option value="date_asc">Oldest First</option>
-                        </select>
+                    {/* Specific Date Filter */}
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 mb-1 ml-1 uppercase tracking-wider">Date</label>
+                        <div className="relative">
+                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                            <input
+                                type="date"
+                                value={specificDate}
+                                onChange={(e) => setSpecificDate(e.target.value)}
+                                className="w-full pl-9 pr-4 py-2.5 rounded-xl border-2 border-slate-300 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all hover:border-slate-400 text-slate-600 placeholder-slate-400 min-h-[42px]"
+                                placeholder="Select Date"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Month Filter */}
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 mb-1 ml-1 uppercase tracking-wider">Month</label>
+                        <div className="relative">
+                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                            <select
+                                value={filterMonth}
+                                onChange={(e) => {
+                                    setFilterMonth(e.target.value);
+                                    setSpecificDate(''); // Clear specific date when month changes
+                                }}
+                                disabled={!!specificDate}
+                                className={`w-full pl-9 pr-10 py-2.5 rounded-xl border-2 border-slate-300 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none appearance-none bg-white cursor-pointer hover:border-slate-400 transition-colors ${specificDate ? 'opacity-50 cursor-not-allowed bg-slate-50' : ''}`}
+                            >
+                                <option value="All">All Months</option>
+                                {MONTHS.slice(1).map((month, index) => (
+                                    <option key={month} value={index + 1}>{month}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Year Filter */}
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 mb-1 ml-1 uppercase tracking-wider">Year</label>
+                        <div className="relative">
+                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                            <select
+                                value={filterYear}
+                                onChange={(e) => {
+                                    setFilterYear(e.target.value);
+                                    setSpecificDate(''); // Clear specific date when year changes
+                                }}
+                                disabled={!!specificDate}
+                                className={`w-full pl-9 pr-10 py-2.5 rounded-xl border-2 border-slate-300 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none appearance-none bg-white cursor-pointer hover:border-slate-400 transition-colors ${specificDate ? 'opacity-50 cursor-not-allowed bg-slate-50' : ''}`}
+                            >
+                                {years.map(year => (
+                                    <option key={year} value={year}>{year}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Sort */}
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 mb-1 ml-1 uppercase tracking-wider">Sort</label>
+                        <div className="relative">
+                            <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                            <select
+                                value={sortOrder}
+                                onChange={(e) => setSortOrder(e.target.value)}
+                                className="w-full pl-9 pr-10 py-2.5 rounded-xl border-2 border-slate-300 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none appearance-none bg-white cursor-pointer hover:border-slate-400 transition-colors"
+                            >
+                                <option value="date_desc">Newest First</option>
+                                <option value="date_asc">Oldest First</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
+
+                {/* Summary View */}
+                {expenses.length > 0 && (
+                    <div className="mt-6 p-4 bg-slate-50 rounded-xl border-2 border-slate-200 flex gap-4 overflow-x-auto pb-4">
+                        {Object.entries(categoryTotals).map(([cat, total]) => (
+                            <div key={cat} className={`flex-shrink-0 px-4 py-3 rounded-xl border ${CATEGORY_COLORS[cat] || CATEGORY_COLORS.Other} bg-white shadow-sm min-w-[140px]`}>
+                                <div className="text-xs font-semibold uppercase tracking-wider opacity-70 mb-1">{cat}</div>
+                                <div className="text-lg font-bold">{formatCurrency(total)}</div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             <div className="flex-1 overflow-y-auto">
@@ -152,7 +274,7 @@ const ExpenseList = ({ refreshTrigger }) => {
                                         <div>
                                             <p className="font-medium text-slate-800">{expense.description || 'No description'}</p>
                                             <div className="flex items-center gap-2 mt-1">
-                                                <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium border border-slate-200">
+                                                <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${CATEGORY_COLORS[expense.category] || CATEGORY_COLORS.Other}`}>
                                                     {expense.category}
                                                 </span>
                                                 <span className="text-xs text-slate-400 flex items-center gap-1">

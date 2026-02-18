@@ -80,12 +80,47 @@ app.post('/expenses', async (req, res) => {
 
 // GET /expenses
 app.get('/expenses', async (req, res) => {
-    const { category, sort } = req.query;
+    const { category, sort, year, month, specific_date } = req.query;
 
     let query = {};
 
     if (category && category !== 'All') {
         query.category = category;
+    }
+
+    // Date Filtering
+    if (specific_date) {
+        // Specific Date (YYYY-MM-DD local time from client)
+        // We want to match any time on that specific day
+        const startOfDay = new Date(specific_date);
+        startOfDay.setHours(0, 0, 0, 0);
+
+        const endOfDay = new Date(specific_date);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        query.date = {
+            $gte: startOfDay,
+            $lte: endOfDay
+        };
+    } else if (year) {
+        // Month/Year Filtering
+        const yearInt = parseInt(year);
+        let startDate, endDate;
+
+        if (month && month !== 'All') {
+            const monthInt = parseInt(month) - 1; // JS months are 0-indexed
+            startDate = new Date(yearInt, monthInt, 1);
+            endDate = new Date(yearInt, monthInt + 1, 0, 23, 59, 59, 999);
+        } else {
+            // Whole year
+            startDate = new Date(yearInt, 0, 1);
+            endDate = new Date(yearInt, 11, 31, 23, 59, 59, 999);
+        }
+
+        query.date = {
+            $gte: startDate,
+            $lte: endDate
+        };
     }
 
     let sortOptions = {};

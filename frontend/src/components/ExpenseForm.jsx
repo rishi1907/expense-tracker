@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { PlusCircle, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { createExpense } from '../api';
 
-const CATEGORIES = ['Food', 'Transport', 'Utilities', 'Entertainment', 'Health', 'Other'];
+const CATEGORIES = ['Food', 'Transport', 'Utilities', 'Entertainment', 'Health', 'Shopping', 'Education', 'Travel', 'Investments', 'Gifts', 'Rent', 'Other'];
 
 const ExpenseForm = ({ onExpenseAdded }) => {
     const [formData, setFormData] = useState({
@@ -53,7 +53,7 @@ const ExpenseForm = ({ onExpenseAdded }) => {
     };
 
     return (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border-2 border-slate-300">
             <h2 className="text-xl font-semibold text-slate-800 mb-6 flex items-center gap-2">
                 <PlusCircle className="w-5 h-5 text-indigo-600" />
                 Add New Expense
@@ -87,7 +87,7 @@ const ExpenseForm = ({ onExpenseAdded }) => {
                                 required
                                 value={formData.amount}
                                 onChange={handleChange}
-                                className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all hover:border-slate-300"
+                                className="w-full pl-8 pr-4 py-2.5 rounded-xl border-2 border-slate-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all hover:border-slate-400"
                                 placeholder="0.00"
                             />
                         </div>
@@ -99,7 +99,7 @@ const ExpenseForm = ({ onExpenseAdded }) => {
                             name="category"
                             value={formData.category}
                             onChange={handleChange}
-                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all bg-white hover:border-slate-300 cursor-pointer"
+                            className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all bg-white hover:border-slate-400 cursor-pointer"
                         >
                             {CATEGORIES.map(cat => (
                                 <option key={cat} value={cat}>{cat}</option>
@@ -116,7 +116,7 @@ const ExpenseForm = ({ onExpenseAdded }) => {
                         required
                         value={formData.date}
                         onChange={handleChange}
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all hover:border-slate-300"
+                        className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all hover:border-slate-400"
                     />
                 </div>
 
@@ -127,7 +127,7 @@ const ExpenseForm = ({ onExpenseAdded }) => {
                         name="description"
                         value={formData.description}
                         onChange={handleChange}
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all hover:border-slate-300"
+                        className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all hover:border-slate-400"
                         placeholder="What was this for?"
                     />
                 </div>
