@@ -79,5 +79,22 @@ expense-tracker/
     ├── src/
     │   ├── components/
     │   └── api.js   # API client with retry logic
-    └── tailwind.config.js
 ```
+
+## Project Notes
+
+### Key Design Decisions
+- **MongoDB vs SQLite**: Initial thought was SQLite for simplicity, but switched to MongoDB to leverage its flexible schema and better support for date-based querying (e.g., ISO dates) which was crucial for the filtering features.
+- **Tailwind CSS**: Chosen for rapid UI development and easy responsiveness. The utility-first approach allowed for quick iteration on the "premium" feel (colors, shadows, borders) without wrestling with custom CSS files.
+- **Component Structure**: Kept it simple with `ExpenseList` and `ExpenseForm`. Avoided over-engineering with a complex state manager like Redux since React's `useState` and prop drilling were sufficient for this scope.
+
+### Trade-offs (Timebox Constraints)
+- **Validation**: Input validation is primarily client-side (HTML5 attributes). Robust backend validation (e.g., using `zod` or `joi`) was omitted to save time.
+- **Error Handling**: Basic try/catch blocks are used. A centralized error handling middleware would be better for a production app but was skipped.
+- **Testing**: Manual verification was prioritized over writing automated unit/integration tests to deliver features faster.
+
+### Intentional Omissions
+- **User Authentication**: The app is single-user for now. Adding Auth0 or JWT would have consumed a significant portion of the timebox.
+- **Edit/Delete Functionality**: Currently, expenses can only be added. Full CRUD (Update/Delete) was deprioritized to focus on the core "Add & View" flow and filtering capabilities.
+- **Advanced Analytics**: Charts/Graphs (e.g., using Recharts) were considered but the "Summary View" (simple totals) was implemented instead as a quicker high-value alternative.
+

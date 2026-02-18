@@ -110,10 +110,10 @@ const ExpenseList = ({ refreshTrigger }) => {
             <div className="p-6 border-b-2 border-slate-300 bg-white sticky top-0 z-10">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <div>
-                        <h2 className="text-xl font-semibold text-slate-800">Your Expenses</h2>
-                        <p className="text-sm text-slate-500 mt-1">
+                        <h2 className="text-3xl font-bold text-slate-800 tracking-tight">Your Expenses</h2>
+                        <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-sm font-medium text-slate-600">
                             {expenses.length} transaction{expenses.length !== 1 ? 's' : ''} found
-                        </p>
+                        </div>
                     </div>
 
                     <div className="bg-indigo-50 px-4 py-2 rounded-xl border border-indigo-100">
