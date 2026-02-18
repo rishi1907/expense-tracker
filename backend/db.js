@@ -1,19 +1,14 @@
-const Database = require('better-sqlite3');
-const path = require('path');
+require('dotenv').config();
+const mongoose = require('mongoose');
 
-const dbPath = path.resolve(__dirname, 'expenses.db');
-const db = new Database(dbPath);
+const connectDB = async () => {
+    try {
+        await mongoose.connect(process.env.MONGO_URI);
+        console.log('MongoDB Connected');
+    } catch (err) {
+        console.error('MongoDB connection error:', err.message);
+        process.exit(1);
+    }
+};
 
-// Initialize database table
-db.exec(`
-    CREATE TABLE IF NOT EXISTS expenses (
-        id TEXT PRIMARY KEY,
-        amount INTEGER NOT NULL,
-        category TEXT NOT NULL,
-        description TEXT,
-        date TEXT NOT NULL,
-        created_at INTEGER DEFAULT (strftime('%s', 'now'))
-    )
-    `);
-
-module.exports = db;
+module.exports = connectDB;

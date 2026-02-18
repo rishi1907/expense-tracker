@@ -1,25 +1,22 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const db = require('./db');
+const connectDB = require('./db');
+const Expense = require('./models/Expense');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+// Connect to MongoDB
+connectDB();
+
 app.use(cors());
 app.use(bodyParser.json());
 
 // Root endpoint
+// Root endpoint
 app.get('/', (req, res) => {
-    res.json({
-        message: 'Expense Tracker API is running',
-        endpoints: {
-            GET_expenses: '/expenses?category=Food&sort=date_desc',
-            POST_expenses: '/expenses'
-        },
-        version: '1.0.0'
-    });
+    res.send('Backend is running');
 });
 
 // Helper function to validate date format (YYYY-MM-DD)
@@ -31,7 +28,7 @@ const isValidDate = (dateString) => {
 };
 
 // POST /expenses
-app.post('/expenses', (req, res) => {
+app.post('/expenses', async (req, res) => {
     const { id, amount, category, description, date } = req.body;
 
     // Validation
@@ -48,17 +45,33 @@ app.post('/expenses', (req, res) => {
     }
 
     try {
-        const insert = db.prepare(`
-      INSERT INTO expenses (id, amount, category, description, date)
-      VALUES (?, ?, ?, ?, ?)
-    `);
-        insert.run(id, amount, category, description, date);
-        res.status(201).json({ id, amount, category, description, date });
+        const newExpense = await Expense.create({
+            id,
+            amount,
+            category,
+            description,
+            date
+        });
+
+        // Mongoose returns the full document including _id and __v, 
+        // but we'll return what the client gave us + standardized fields if needed.
+        res.status(201).json({
+            id: newExpense.id,
+            amount: newExpense.amount,
+            category: newExpense.category,
+            description: newExpense.description,
+            date: newExpense.date
+        });
     } catch (err) {
-        if (err.code === 'SQLITE_CONSTRAINT_PRIMARYKEY') {
-            // Idempotency: Return existing resource if ID already exists
-            const existing = db.prepare('SELECT * FROM expenses WHERE id = ?').get(id);
-            return res.status(200).json(existing);
+        // Duplicate key error (idempotency)
+        if (err.code === 11000) {
+            try {
+                const existing = await Expense.findOne({ id });
+                return res.status(200).json(existing);
+            } catch (findErr) {
+                console.error('Error finding existing expense:', findErr);
+                return res.status(500).json({ error: 'Internal server error during idempotency check' });
+            }
         }
         console.error('Database error:', err);
         res.status(500).json({ error: 'Internal server error' });
@@ -66,29 +79,28 @@ app.post('/expenses', (req, res) => {
 });
 
 // GET /expenses
-app.get('/expenses', (req, res) => {
+app.get('/expenses', async (req, res) => {
     const { category, sort } = req.query;
 
-    let query = 'SELECT * FROM expenses';
-    const params = [];
+    let query = {};
 
     if (category && category !== 'All') {
-        query += ' WHERE category = ?';
-        params.push(category);
+        query.category = category;
     }
 
+    let sortOptions = {};
     // Sorting logic
     if (sort === 'date_desc') {
-        query += ' ORDER BY date DESC, created_at DESC';
+        sortOptions = { date: -1, created_at: -1 };
     } else if (sort === 'date_asc') {
-        query += ' ORDER BY date ASC, created_at ASC';
+        sortOptions = { date: 1, created_at: 1 };
     } else {
-        // Default sort by created_at desc (newest created first)
-        query += ' ORDER BY created_at DESC';
+        // Default sort by created_at desc
+        sortOptions = { created_at: -1 };
     }
 
     try {
-        const expenses = db.prepare(query).all(...params);
+        const expenses = await Expense.find(query).sort(sortOptions);
         res.json(expenses);
     } catch (err) {
         console.error('Database error:', err);
