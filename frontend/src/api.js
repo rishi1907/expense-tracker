@@ -1,8 +1,7 @@
 import axios from 'axios';
 
-// Automatically select URL based on environment
-// VITE_API_URL can be set in Vercel for production
-// Defaults to localhost for development
+
+//const API_BASE_URL = 'https://expense-tracker-wn6h.vercel.app';
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const api = axios.create({
